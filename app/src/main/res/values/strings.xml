@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">GMAPS</string>
+    <string name="maps_c">Maps C</string>
+    <string name="App_Name">Maps C</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="usericon">userIcon</string>
+</resources>

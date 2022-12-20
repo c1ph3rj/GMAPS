@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:weightSum="10"
+    android:fitsSystemWindows="true"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginStart="@dimen/val_20dp"
+        android:layout_marginEnd="@dimen/val_20dp"
+        android:layout_marginTop="@dimen/val_10dp"
+        android:layout_marginBottom="@dimen/val_10dp"
+        android:weightSum="10">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/maps_c"
+            android:gravity="center_vertical"
+            android:fontFamily="@font/poppins_bold"
+            android:textSize="@dimen/val_34sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+    </LinearLayout>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="10"
+        app:cardCornerRadius="@dimen/radius_10dp"
+        android:layout_marginBottom="@dimen/val_20dp"
+        android:layout_marginStart="@dimen/val_20dp"
+        android:layout_marginEnd="@dimen/val_20dp"
+        app:cardElevation="@dimen/margin_10dp">
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/ViewPager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </androidx.cardview.widget.CardView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/val_60dp"
+        app:labelVisibilityMode="unlabeled"
+        android:id="@+id/BottomNavigation"
+        android:layout_marginBottom="@dimen/val_15dp"
+        android:layout_marginLeft="@dimen/margin_20dp"
+        android:layout_marginRight="@dimen/margin_20dp"
+        android:background="@drawable/bottom_navigation_background"
+        app:menu="@menu/bottom_navigation_menu" />
+
+</LinearLayout>
