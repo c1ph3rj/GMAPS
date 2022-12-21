@@ -1,10 +1,15 @@
 package com.c1ph3r.gmaps.fragments;
 
+import static com.c1ph3r.gmaps.MainActivity.addresses;
+import static com.c1ph3r.gmaps.MainActivity.latLng;
+import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.checkGPSStatus;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +24,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsFragment extends Fragment {
 
-    private OnMapReadyCallback callback = new OnMapReadyCallback() {
+    private final OnMapReadyCallback callback = new OnMapReadyCallback() {
 
         /**
          * Manipulates the map once available.
@@ -32,9 +37,27 @@ public class MapsFragment extends Fragment {
          */
         @Override
         public void onMapReady(GoogleMap googleMap) {
-            LatLng sydney = new LatLng(-34, 151);
-            googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-            googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+            // When clicked on map
+            // Initialize marker options
+            if(checkGPSStatus(requireActivity())){
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        final MarkerOptions markerOptions=new MarkerOptions();
+                        // Set position of marker
+                        markerOptions.position(latLng);
+                        // Set title of marker
+                        markerOptions.title(String.valueOf(addresses.get(0)));
+                        // Remove all marker
+                        googleMap.clear();
+                        // Animating to zoom the marker
+                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,15));
+                        // Add marker on map
+                        googleMap.addMarker(markerOptions);
+                    }
+                }, 8000);
+            }
+
         }
     };
 

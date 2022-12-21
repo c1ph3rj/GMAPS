@@ -9,7 +9,7 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="primaryColor">#393e46</color>
-    <color name="primaryLightColor">#636871</color>
+    <color name="primaryLightColor">#40636871</color>
     <color name="primaryDarkColor">#13181f</color>
     <color name="secondaryColor">#00587a</color>
     <color name="secondaryLightColor">#4685a9</color>
@@ -19,6 +19,10 @@
 
 
     <color name="seed">#13181f</color>
+
+    <color name="lightTint">#5000639C</color>
+    <color name="darkTint">#50D2E4FF</color>
+
     <color name="md_theme_light_primary">#0F61A4</color>
     <color name="md_theme_light_onPrimary">#FFFFFF</color>
     <color name="md_theme_light_primaryContainer">#D2E4FF</color>

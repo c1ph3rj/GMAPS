@@ -1,5 +1,8 @@
 package com.c1ph3r.gmaps.splashScreen;
 
+import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.checkGPSStatus;
+import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.isNetworkConnected;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -8,11 +11,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.LocationManager;
-import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -68,12 +68,12 @@ public class Welcome extends AppCompatActivity {
     public ActivityResultLauncher<Intent> getPermissionResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> askUserForPermission());
 
     private void getUserLocationPermission() {
-        if(!(isNetworkConnected())){
+        if(!(isNetworkConnected(this))){
             new MaterialAlertDialogBuilder(this).setTitle("Internet connection required!")
                     .setMessage("Please turn on your internet connection and try again.")
                     .setPositiveButton("Ok", (dialogInterface, i) -> startActivity(new Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS))).show();
         }
-        else if(!(checkGPSStatus())){
+        else if(!(checkGPSStatus(this))){
             new MaterialAlertDialogBuilder(this).setTitle("Internet connection required!")
                     .setMessage("Please turn on your internet connection and try again.")
                     .setPositiveButton("Ok", (dialogInterface, i) -> {
@@ -86,29 +86,8 @@ public class Welcome extends AppCompatActivity {
         }
     }
 
-    public boolean isNetworkConnected() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        return cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected();
-    }
 
-    private boolean checkGPSStatus() {
-        LocationManager locationManager;
-        boolean gps_enabled = false;
-        boolean network_enabled = false;
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        try {
-            gps_enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        try {
-            network_enabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return gps_enabled || network_enabled;
-    }
 
     private void splashWelcomeScreen() {
         new Handler().postDelayed(() -> {

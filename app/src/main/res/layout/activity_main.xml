@@ -52,9 +52,11 @@
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:layout_width="match_parent"
-        android:layout_height="@dimen/val_60dp"
+        android:layout_height="@dimen/val_55dp"
         app:labelVisibilityMode="unlabeled"
         android:id="@+id/BottomNavigation"
+        app:itemActiveIndicatorStyle="@style/App.Custom.Indicator"
+        app:itemIconTint="?attr/colorOnPrimaryContainer"
         android:layout_marginBottom="@dimen/val_15dp"
         android:layout_marginLeft="@dimen/margin_20dp"
         android:layout_marginRight="@dimen/margin_20dp"

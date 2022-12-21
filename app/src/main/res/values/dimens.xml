@@ -14,4 +14,5 @@
     <dimen name="val_40dp">40dp</dimen>
     <dimen name="val_50dp">50dp</dimen>
     <dimen name="val_10dp">10dp</dimen>
+    <dimen name="val_55dp">55dp</dimen>
 </resources>
