@@ -5,6 +5,9 @@ import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.CompositePageTransformer;
+import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.annotation.SuppressLint;
@@ -15,6 +18,8 @@ import android.location.LocationListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.renderscript.RenderScript;
+import android.util.Log;
+import android.view.View;
 
 import com.c1ph3r.gmaps.adapter.BottomNavAdapter;
 import com.c1ph3r.gmaps.databinding.ActivityMainBinding;
@@ -68,6 +73,21 @@ public class MainActivity extends AppCompatActivity{
         container.setAdapter(bottomNavAdapter);
 
         container.setUserInputEnabled(false);
+        container.setClipToPadding(false);
+        container.setClipChildren(false);
+        container.setOffscreenPageLimit(3);
+        container.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
+
+        // Code for carousel view animation in viewpager2.
+        CompositePageTransformer compositePageTransformer = new CompositePageTransformer();
+        compositePageTransformer.addTransformer(new MarginPageTransformer(40));
+        compositePageTransformer.addTransformer((page, position) -> {
+            float val = 1 - Math.abs(position);
+            page.setScaleY(0.85f + val * 0.15f);
+        });
+
+        // Adding carousel view animation to the viewpager2.
+        container.setPageTransformer(compositePageTransformer);
 
         bottomNav.setOnItemSelectedListener(bottomNavItem -> {
             if(bottomNavItem.getItemId() == R.id.HomePageBtn){
@@ -93,11 +113,13 @@ public class MainActivity extends AppCompatActivity{
             // converting the long and lat to the address.
             Geocoder fetchAddress = new Geocoder(this, Locale.getDefault());
             try {
-                latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                // Fetching the address from the response
-                addresses = fetchAddress.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-                System.out.println(addresses.get(0));
-            } catch (IOException e) {
+                if(location != null){
+                    latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                    // Fetching the address from the response
+                    addresses = fetchAddress.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+                    Log.i("Location : ", addresses.get(0).toString());
+                }
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }).addOnFailureListener(Throwable::printStackTrace);
