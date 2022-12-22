@@ -65,21 +65,23 @@ public class Welcome extends AppCompatActivity {
         }
     }
 
-    public ActivityResultLauncher<Intent> getPermissionResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> askUserForPermission());
+    public ActivityResultLauncher<Intent> getPermissionResult =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+            result -> askUserForPermission());
 
     private void getUserLocationPermission() {
         if(!(isNetworkConnected(this))){
-            new MaterialAlertDialogBuilder(this).setTitle("Internet connection required!")
-                    .setMessage("Please turn on your internet connection and try again.")
-                    .setPositiveButton("Ok", (dialogInterface, i) -> startActivity(new Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS))).show();
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Internet connection required!")
+                    .setMessage("Your internet connection disabled. Please enable your internet connection to continue.")
+                    .setPositiveButton("Ok", (dialogInterface, i) ->
+                            getPermissionResult.launch(new Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS))).show();
         }
         else if(!(checkGPSStatus(this))){
-            new MaterialAlertDialogBuilder(this).setTitle("Internet connection required!")
-                    .setMessage("Please turn on your internet connection and try again.")
-                    .setPositiveButton("Ok", (dialogInterface, i) -> {
-                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivity(intent);
-                    }).show();
+            new MaterialAlertDialogBuilder(this).setTitle("Location disabled!")
+                    .setMessage("Your GPS service disabled. Please turn on your GPS to fetch your location.")
+                    .setPositiveButton("Ok", (dialogInterface, i) ->
+                            getPermissionResult.launch(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))).show();
         }
         else {
             splashWelcomeScreen();
