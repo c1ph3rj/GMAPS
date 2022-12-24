@@ -18,4 +18,10 @@
     <dimen name="val_25dp">25dp</dimen>
     <dimen name="val_180dp">180dp</dimen>
     <dimen name="val_42dp">42dp</dimen>
+    <dimen name="val_6dp">6dp</dimen>
+    <dimen name="val_250dp">250dp</dimen>
+    <dimen name="val_5dp">5dp</dimen>
+    <dimen name="val_8dp">8dp</dimen>
+    <dimen name="val_14sp">14sp</dimen>
+    <dimen name="val_200dp">200dp</dimen>
 </resources>

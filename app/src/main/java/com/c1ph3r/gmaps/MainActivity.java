@@ -11,6 +11,9 @@ import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -43,7 +46,7 @@ public class MainActivity extends AppCompatActivity{
 
     public static List<Address> addresses;
     public static LatLng latLng;
-    BottomNavigationView bottomNav;
+    public static BottomNavigationView bottomNav;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,13 +61,18 @@ public class MainActivity extends AppCompatActivity{
         bottomNav = BindMain.BottomNavigation;
         ViewPager2 container = BindMain.ViewPager;
 
-        getLocationOfTheUser();
-        getUserLocation();
+        try {
+            getLocationOfTheUser();
+            getUserLocation(this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         ArrayList<Fragment> listOfFragments = new ArrayList<>();
         Fragment maps = new MapsFragment();
         listOfFragments.add(maps);
         Fragment search = new SearchFragment();
+        Log.i("MapFragment", String.valueOf(search.getId()));
         listOfFragments.add(search);
         Fragment settings = new SettingsFragment();
         listOfFragments.add(settings);
@@ -90,12 +98,16 @@ public class MainActivity extends AppCompatActivity{
         container.setPageTransformer(compositePageTransformer);
 
         bottomNav.setOnItemSelectedListener(bottomNavItem -> {
-            if(bottomNavItem.getItemId() == R.id.HomePageBtn){
-                container.setCurrentItem(0);
-            }else if(bottomNavItem.getItemId() == R.id.SearchBtn){
-                container.setCurrentItem(1);
-            }else if(bottomNavItem.getItemId() == R.id.SettingsBtn){
-                container.setCurrentItem(2);
+            try {
+                if(bottomNavItem.getItemId() == R.id.HomePageBtn){
+                    container.setCurrentItem(0);
+                }else if(bottomNavItem.getItemId() == R.id.SearchBtn){
+                    container.setCurrentItem(1);
+                }else if(bottomNavItem.getItemId() == R.id.SettingsBtn){
+                    container.setCurrentItem(2);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             return true;
         });
@@ -104,26 +116,30 @@ public class MainActivity extends AppCompatActivity{
 
     // Method to Fetch user Location
     @SuppressLint("MissingPermission")
-    void getUserLocation() {
-        CancellationTokenSource ct = new CancellationTokenSource();
-        ct.getToken();
-        FusedLocationProviderClient fusedLocation = LocationServices.getFusedLocationProviderClient(MainActivity.this);
-        // To fetch the current location of the user.
-        fusedLocation.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, ct.getToken()).addOnSuccessListener(this, location -> {
-            // converting the long and lat to the address.
-            Geocoder fetchAddress = new Geocoder(this, Locale.getDefault());
-            try {
-                if(location != null){
-                    latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                    // Fetching the address from the response
-                    addresses = fetchAddress.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-                    Log.i("Location : ", addresses.get(0).toString());
+    public static void getUserLocation(Activity context) {
+        try {
+            CancellationTokenSource ct = new CancellationTokenSource();
+            ct.getToken();
+            FusedLocationProviderClient fusedLocation = LocationServices.getFusedLocationProviderClient(context);
+            // To fetch the current location of the user.
+            fusedLocation.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, ct.getToken()).addOnSuccessListener(context, location -> {
+                // converting the long and lat to the address.
+                Geocoder fetchAddress = new Geocoder(context, Locale.getDefault());
+                try {
+                    if(location != null){
+                        latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                        // Fetching the address from the response
+                        addresses = fetchAddress.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+                        Log.i("Location : ", addresses.get(0).toString());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).addOnFailureListener(Throwable::printStackTrace);
+            }).addOnFailureListener(Throwable::printStackTrace);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }// End of getUserLocation.
 
     void getLocationOfTheUser(){
@@ -133,7 +149,7 @@ public class MainActivity extends AppCompatActivity{
                 public void run() {
                     if(isNetworkConnected(MainActivity.this)){
                         if(checkGPSStatus(MainActivity.this)){
-                            getUserLocation();
+                            getUserLocation(MainActivity.this);
                         }else {
                             alertTheUser(MainActivity.this, "Location disabled!", "Your GPS service disabled. Please turn on your GPS to fetch your location.");
                         }

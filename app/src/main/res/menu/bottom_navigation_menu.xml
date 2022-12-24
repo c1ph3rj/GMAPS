@@ -4,7 +4,7 @@
 
     <item android:title="Home"
         android:id="@+id/HomePageBtn"
-        android:icon="@drawable/home_ic"/>
+        android:icon="@drawable/home_icon"/>
     <item android:title="Search"
         android:id="@+id/SearchBtn"
         android:icon="@drawable/search_ic"/>

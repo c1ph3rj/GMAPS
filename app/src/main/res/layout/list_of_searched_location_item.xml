@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/val_250dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_margin="@dimen/val_15dp"
+        app:cardCornerRadius="@dimen/val_10dp"
+        app:cardElevation="@dimen/val_8dp"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+
+            <com.google.android.gms.maps.MapView
+                android:id="@+id/imageView"
+                android:layout_width="@dimen/val_200dp"
+                android:layout_height="match_parent"
+                tools:srcCompat="@tools:sample/avatars" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:orientation="vertical"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/SearchResultTitle"
+                    android:layout_width="match_parent"
+                    android:padding="@dimen/val_5dp"
+                    android:text="@string/location_name"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/val_14sp"
+                    android:fontFamily="@font/poppins_bold"
+                    android:layout_weight="1"/>
+
+                <TextView
+                    android:id="@+id/SearchResultBody"
+                    android:layout_width="match_parent"
+                    android:padding="@dimen/val_6dp"
+                    android:textSize="@dimen/val_14sp"
+                    android:text="@string/location_body"
+                    android:fontFamily="@font/poppins_medium"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

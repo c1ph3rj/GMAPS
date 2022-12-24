@@ -5,4 +5,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="usericon">userIcon</string>
+    <string name="search_location">Search Location</string>
+    <string name="location_name">Location Name</string>
+    <string name="location_body">Location Body</string>
 </resources>

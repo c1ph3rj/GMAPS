@@ -1,6 +1,7 @@
 package com.c1ph3r.gmaps.fragments;
 
 import static com.c1ph3r.gmaps.MainActivity.addresses;
+import static com.c1ph3r.gmaps.MainActivity.getUserLocation;
 import static com.c1ph3r.gmaps.MainActivity.latLng;
 import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.alertTheUser;
 import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.checkGPSStatus;
@@ -19,7 +20,9 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
+import com.c1ph3r.gmaps.MainActivity;
 import com.c1ph3r.gmaps.R;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -108,7 +111,13 @@ public class MapsFragment extends Fragment {
             Objects.requireNonNull(googleMap.addMarker(markerOptions))
                     .setIcon(BitmapFromVector(requireActivity(), R.drawable.user_location_ic));
         }else {
-            alertTheUser(requireActivity(),"Something went Wrong!", "Your Internet connection may be down or we are unable to fetch your location at the moment please try again later.");
+            try {
+                getUserLocation(requireActivity());
+                setUserCurrentLocationOnMap();
+            } catch (Exception e) {
+                alertTheUser(requireActivity(),"Something went Wrong!", "Your Internet connection may be down or we are unable to fetch your location at the moment please try again later.");
+                e.printStackTrace();
+            }
         }
     }
 
