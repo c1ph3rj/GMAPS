@@ -8,4 +8,9 @@
     <string name="search_location">Search Location</string>
     <string name="location_name">Location Name</string>
     <string name="location_body">Location Body</string>
+    <string name="API_KEY">AIzaSyCZHuBNjY8UvPUw2hTmqTsyjCcKEH6o5NE</string>
+    <string name="search_title">Title</string>
+    <string name="searchbody">searchBody</string>
+    <string name="locatemeBtn">locateMe</string>
+    <string name="navigatebtn">NavigateBtn</string>
 </resources>

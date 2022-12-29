@@ -24,4 +24,6 @@
     <dimen name="val_8dp">8dp</dimen>
     <dimen name="val_14sp">14sp</dimen>
     <dimen name="val_200dp">200dp</dimen>
+    <dimen name="val_20sp">20sp</dimen>
+    <dimen name="val_0_5dp">0.5dp</dimen>
 </resources>

@@ -20,8 +20,8 @@
 
     <color name="seed">#13181f</color>
 
-    <color name="lightTint">#5000639C</color>
-    <color name="darkTint">#50D2E4FF</color>
+    <color name="lightTint">#80001C37</color>
+    <color name="darkTint">#80D2E4FF</color>
 
     <color name="md_theme_light_primary">#0F61A4</color>
     <color name="md_theme_light_onPrimary">#FFFFFF</color>

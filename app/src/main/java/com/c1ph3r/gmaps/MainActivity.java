@@ -4,6 +4,8 @@ import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.*;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.CompositePageTransformer;
@@ -12,8 +14,12 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.pm.ResolveInfo;
+import android.graphics.Rect;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -23,6 +29,14 @@ import android.os.Handler;
 import android.renderscript.RenderScript;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.inputmethod.InputMethod;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.c1ph3r.gmaps.adapter.BottomNavAdapter;
 import com.c1ph3r.gmaps.databinding.ActivityMainBinding;
@@ -35,6 +49,10 @@ import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,6 +65,8 @@ public class MainActivity extends AppCompatActivity{
     public static List<Address> addresses;
     public static LatLng latLng;
     public static BottomNavigationView bottomNav;
+    Fragment maps;
+    View mapView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +89,7 @@ public class MainActivity extends AppCompatActivity{
         }
 
         ArrayList<Fragment> listOfFragments = new ArrayList<>();
-        Fragment maps = new MapsFragment();
+        maps = new MapsFragment();
         listOfFragments.add(maps);
         Fragment search = new SearchFragment();
         Log.i("MapFragment", String.valueOf(search.getId()));
@@ -112,6 +132,28 @@ public class MainActivity extends AppCompatActivity{
             return true;
         });
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        MainActivity.bottomNav.setVisibility(View.VISIBLE);
+        mapView = maps.getView();
+        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        if(mapView != null){
+            imm.hideSoftInputFromWindow(mapView.getWindowToken(), 0);
+            TextInputEditText searchField = mapView.findViewById(R.id.SearchField);
+            if(searchField.isFocused()) {
+                new Handler().postDelayed(searchField::clearFocus, 200);
+                return;
+            }
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Maps C")
+                .setMessage("Do you want to exit ?")
+                .setPositiveButton("Yes", (dialog, which) -> finishAffinity())
+                .setNegativeButton("No", (dialog, which) ->{})
+                .show();
     }
 
     // Method to Fetch user Location
