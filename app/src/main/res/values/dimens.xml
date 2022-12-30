@@ -26,4 +26,8 @@
     <dimen name="val_200dp">200dp</dimen>
     <dimen name="val_20sp">20sp</dimen>
     <dimen name="val_0_5dp">0.5dp</dimen>
+    <dimen name="val_0dp">0dp</dimen>
+    <dimen name="val_300dp">300dp</dimen>
+    <dimen name="val_350dp">350dp</dimen>
+    <dimen name="val_100dp">100dp</dimen>
 </resources>

@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity{
 
     public static List<Address> addresses;
     public static LatLng latLng;
+    public static Location location;
     public static BottomNavigationView bottomNav;
     Fragment maps;
     View mapView;
@@ -169,6 +170,7 @@ public class MainActivity extends AppCompatActivity{
                 Geocoder fetchAddress = new Geocoder(context, Locale.getDefault());
                 try {
                     if(location != null){
+                        MainActivity.location = location;
                         latLng = new LatLng(location.getLatitude(), location.getLongitude());
                         // Fetching the address from the response
                         addresses = fetchAddress.getFromLocation(location.getLatitude(), location.getLongitude(), 1);

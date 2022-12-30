@@ -13,4 +13,6 @@
     <string name="searchbody">searchBody</string>
     <string name="locatemeBtn">locateMe</string>
     <string name="navigatebtn">NavigateBtn</string>
+    <string name="nearbyplacesimages">nearByPlacesImages</string>
+    <string name="images">Images</string>
 </resources>

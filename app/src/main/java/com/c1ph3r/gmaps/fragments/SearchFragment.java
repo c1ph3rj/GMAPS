@@ -1,33 +1,47 @@
 package com.c1ph3r.gmaps.fragments;
 
-import android.location.Address;
-import android.location.Geocoder;
+import static com.c1ph3r.gmaps.MainActivity.latLng;
+
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.viewpager2.widget.ViewPager2;
 
-import com.c1ph3r.gmaps.MainActivity;
 import com.c1ph3r.gmaps.R;
-import com.google.android.gms.maps.model.LatLng;
+import com.c1ph3r.gmaps.adapter.NearByPlacesViewAdapter;
+import com.c1ph3r.gmaps.apiClient.APIClient;
+import com.c1ph3r.gmaps.apiClient.GoogleMapAPI;
+import com.c1ph3r.gmaps.apiModel.PlacesResults;
+import com.c1ph3r.gmaps.apiModel.Result;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class SearchFragment extends Fragment {
     View view;
     TextInputEditText searchLocationField;
-    ArrayList<String> searchResultList;
-    ArrayList<LatLng> searchResultLatLng;
     ListView searchResultView;
+    PlacesClient placesClient;
+    ViewPager2 listOfPlacesView;
+    ArrayList<NearByPlacesListItem> listOfPlaces = new ArrayList<>();
+    AutocompleteSessionToken autocompleteSessionToken;
+    ArrayList<Place> listOfSearchPlaces;
 
     public SearchFragment() {
         // Required empty public constructor
@@ -40,7 +54,7 @@ public class SearchFragment extends Fragment {
         // Inflate the layout for this fragment
 
         init();
-        searchMenu();
+
 
         return view;
     }
@@ -49,63 +63,55 @@ public class SearchFragment extends Fragment {
         try {
             searchLocationField = view.findViewById(R.id.SearchField);
             searchResultView = view.findViewById(R.id.SearchResultItems);
+            listOfPlacesView = view.findViewById(R.id.nearByPlacesDetails);
+
+            initPlaces();
+
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    initViewPager();
+                }
+            }, 2000);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void searchMenu() {
-        searchLocationField.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-                try {
-                    searchResultList = new ArrayList<>();
-                    searchResultLatLng = new ArrayList<>();
-                    if (editable != null && !editable.toString().isEmpty()) {
-                        // Create a Geocoder object
-                        Geocoder geocoder = new Geocoder(requireContext());
-
-                        // Perform the search
-                        List<Address> addresses = geocoder.getFromLocationName(editable.toString(), 10);
-                        if (addresses.size() > 0) {
-                            // Get the first result
-                            Address address = addresses.get(0);
-                            for (Address addressInSearch : addresses) {
-                                searchResultList.add(addressInSearch.getAddressLine(0));
-                                searchResultLatLng.add(new LatLng(addressInSearch.getLatitude(), addressInSearch.getLongitude()));
-                            }
-                            initListView();
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
-    private void initListView() {
+    private void initViewPager() {
         try {
-            ArrayAdapter<String> searchResultAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, searchResultList);
-            searchResultView.setAdapter(searchResultAdapter);
-            searchResultView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            String currentLocation = latLng.latitude + "," + latLng.longitude;
+            GoogleMapAPI googleMapAPI = APIClient.getClient().create(GoogleMapAPI.class);
+            googleMapAPI.getNearBy(currentLocation, 10000, "Restaurant", "", getString(R.string.API_KEY)).enqueue(new Callback<PlacesResults>() {
                 @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                    MainActivity.bottomNav.setSelectedItemId(R.id.HomePageBtn);
+                public void onResponse(@NonNull Call<PlacesResults> call, @NonNull Response<PlacesResults> response) {
+                    if (response.isSuccessful()) {
+                        assert response.body() != null;
+                        List<Result> results = response.body().getResults();
+                        for(Result result: results){
+                            listOfPlaces.add(new NearByPlacesListItem(result));
+                        }
+
+                        NearByPlacesViewAdapter adapter = new NearByPlacesViewAdapter(requireActivity(), listOfPlaces);
+                        listOfPlacesView.setAdapter(adapter);
+                    } else {
+                        Toast.makeText(requireContext(), "Failed", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<PlacesResults> call, @NonNull Throwable t) {
+                    Toast.makeText(requireContext(), t.getMessage(), Toast.LENGTH_LONG).show();
                 }
             });
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    private void initPlaces() {
+        Places.initialize(requireActivity(), getString(R.string.API_KEY));
+        placesClient = Places.createClient(requireContext());
+    }
+
 }

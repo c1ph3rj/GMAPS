@@ -7,7 +7,7 @@
         android:icon="@drawable/home_icon"/>
     <item android:title="Search"
         android:id="@+id/SearchBtn"
-        android:icon="@drawable/search_ic"/>
+        android:icon="@drawable/near_me_ic"/>
     <item android:title="Settings"
         android:id="@+id/SettingsBtn"
         android:icon="@drawable/settings_ic"/>

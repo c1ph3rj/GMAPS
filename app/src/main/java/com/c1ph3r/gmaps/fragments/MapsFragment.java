@@ -5,12 +5,9 @@ import static com.c1ph3r.gmaps.MainActivity.getUserLocation;
 import static com.c1ph3r.gmaps.MainActivity.latLng;
 import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.alertTheUser;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,9 +23,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.cardview.widget.CardView;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -63,7 +58,7 @@ import java.util.Objects;
 
 public class MapsFragment extends Fragment {
 
-    public GoogleMap googleMap;
+    public static GoogleMap googleMap;
     TextInputLayout searchLayout;
     TextInputEditText searchField;
     CardView navigateBtn, locateMe;
@@ -72,7 +67,6 @@ public class MapsFragment extends Fragment {
     ArrayList<SearchResultList> listOfSearchPlaces;
     ListView searchResultView;
     PlacesClient placesClient;
-    View locationButton;
     AutocompleteSessionToken autocompleteSessionToken;
 
     private final OnMapReadyCallback callback = new OnMapReadyCallback() {
@@ -192,25 +186,14 @@ public class MapsFragment extends Fragment {
     private void setUserCurrentLocationOnMap() {
         try {
             if(latLng != null){
-                final MarkerOptions markerOptions=new MarkerOptions();
-                // Set position of marker
-                markerOptions.position(new LatLng(latLng.latitude  -0.000018, latLng.longitude))
-                        .flat(true);
-                // Set title of marker
-                markerOptions.title(String.valueOf(addresses.get(0)));
-                // Remove all marker
-                googleMap.clear();
-
                 // Instantiating CircleOptions to draw a circle around the marker
                 CircleOptions circleOptions = new CircleOptions();
 
                 // Specifying the center of the circle
                 circleOptions.center(latLng);
 
-
-
                 // Radius of the circle
-                circleOptions.radius(50);
+                circleOptions.radius(10000);
 
                 // Border color of the circle
                 circleOptions.strokeColor(requireActivity().getColor(R.color.primaryColor));
@@ -221,17 +204,27 @@ public class MapsFragment extends Fragment {
                 // Border width of the circle
                 circleOptions.strokeWidth(2);
 
+
+                final MarkerOptions markerOptions=new MarkerOptions();
+                // Set position of marker
+                markerOptions.position(latLng)
+                        .flat(true);
+                // Set title of marker
+                markerOptions.title(String.valueOf((addresses.get(0)).getAddressLine(0)));
+                // Remove all marker
+                googleMap.clear();
+
                 // Construct a CameraPosition focusing on Mountain View and animate the camera to that position.
                 CameraPosition cameraPosition = new CameraPosition.Builder()
                         .target(latLng)             // Sets the center of the map to Mountain View
-                        .zoom(18)                   // Sets the zoom
+                        .zoom(14)                   // Sets the zoom
                         .build();                   // Creates a CameraPosition from the builder
 
                 // Animating to zoom the marker
                 googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                 // Add marker on map
                 Objects.requireNonNull(googleMap.addMarker(markerOptions))
-                        .setIcon(BitmapFromVector(requireActivity(), R.drawable.current_location));
+                        .setIcon(BitmapFromVector(requireActivity(), R.drawable.current_gps));
                 // Adding the circle to the GoogleMap
                 googleMap.addCircle(circleOptions);
             }else {
@@ -248,7 +241,7 @@ public class MapsFragment extends Fragment {
         }
     }
 
-    private void setMarkerOnNewLocation(Place newPosition){
+    public static void setMarkerOnNewLocation(Place newPosition, Context context){
         try {
             if(newPosition != null){
                 MarkerOptions markerOptions=new MarkerOptions();
@@ -271,14 +264,14 @@ public class MapsFragment extends Fragment {
                 googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                 // Add marker on map
                 Objects.requireNonNull(googleMap.addMarker(markerOptions))
-                        .setIcon(BitmapFromVector(requireActivity(), R.drawable.user_location_ic));
+                        .setIcon(BitmapFromVector(context, R.drawable.user_location_ic));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private BitmapDescriptor BitmapFromVector(Context context, int vectorResId) {
+    private static BitmapDescriptor BitmapFromVector(Context context, int vectorResId) {
         try {
             // below line is use to generate a drawable.
             Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
@@ -327,7 +320,7 @@ public class MapsFragment extends Fragment {
                         placesClient = Places.createClient(requireActivity());
                         FindAutocompletePredictionsRequest request = FindAutocompletePredictionsRequest.builder()
                                 .setQuery(Objects.requireNonNull(searchField.getText()).toString().trim())
-                                .setCountries((addresses.get(0)).getCountryCode())
+                                .setCountry((addresses.get(0)).getCountryCode())
                                 .setSessionToken(autocompleteSessionToken)
                                 .setOrigin(latLng)
                                 .build();
@@ -368,7 +361,7 @@ public class MapsFragment extends Fragment {
                 ).build();
                 placesClient.fetchPlace(request).addOnSuccessListener(fetchPlaceResponse -> {
                     Place place = fetchPlaceResponse.getPlace();
-                    setMarkerOnNewLocation(place);
+                    setMarkerOnNewLocation(place, requireActivity());
                 }).addOnFailureListener(e ->
                         Toast.makeText(requireActivity(), "Please Check your internet connection.", Toast.LENGTH_SHORT).show());
             });
