@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -11,7 +10,7 @@
         android:layout_margin="@dimen/val_15dp"
         app:cardCornerRadius="@dimen/val_10dp"
         app:cardElevation="@dimen/val_8dp"
-    android:id="@+id/nearByPlaceLayout"
+        android:id="@+id/nearByPlaceLayout"
         android:layout_height="wrap_content">
 
         <LinearLayout
@@ -44,6 +43,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/nearByPlaceRatings"
                 android:paddingLeft="@dimen/val_10dp"
+                android:progressTint="@color/quantum_yellow800"
                 android:paddingRight="@dimen/val_10dp"
                 style="?android:attr/ratingBarStyleSmall"/>
 
