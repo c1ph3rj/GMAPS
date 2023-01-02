@@ -3,13 +3,15 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical">
+
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_margin="@dimen/val_15dp"
+        android:layout_marginLeft="@dimen/val_10dp"
+        android:layout_marginRight="@dimen/val_10dp"
         app:cardCornerRadius="@dimen/val_10dp"
-        app:cardElevation="@dimen/val_8dp"
+        app:cardElevation="@dimen/val_10dp"
         android:id="@+id/nearByPlaceLayout"
         android:layout_height="wrap_content">
 
@@ -20,7 +22,7 @@
 
             <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/val_200dp"
+                android:layout_height="@dimen/val_180dp"
                 android:id="@+id/listOfImages"
                 android:scaleType="centerCrop"
                 android:contentDescription="@string/images" />
@@ -29,12 +31,13 @@
                 android:id="@+id/nearByPlaceTitle"
                 android:layout_width="match_parent"
                 android:paddingTop="@dimen/val_5dp"
+                android:maxLines="2"
+                android:ellipsize="end"
                 android:paddingRight="@dimen/val_10dp"
                 android:paddingLeft="@dimen/val_10dp"
                 android:paddingBottom="@dimen/val_5dp"
                 android:text="@string/location_name"
                 android:layout_height="wrap_content"
-                android:textSize="@dimen/val_14sp"
                 android:textColor="?attr/colorPrimary"
                 android:fontFamily="@font/poppins_bold"/>
 
@@ -43,6 +46,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/nearByPlaceRatings"
                 android:paddingLeft="@dimen/val_10dp"
+                android:paddingBottom="@dimen/val_10dp"
                 android:progressTint="@color/quantum_yellow800"
                 android:paddingRight="@dimen/val_10dp"
                 style="?android:attr/ratingBarStyleSmall"/>
@@ -54,7 +58,8 @@
                 android:padding="@dimen/val_10dp"
                 android:lines="2"
                 android:ellipsize="end"
-                android:textSize="@dimen/val_14sp"
+                android:visibility="gone"
+                android:textSize="@dimen/val_12sp"
                 android:text="@string/location_body"
                 android:fontFamily="@font/poppins_medium"
                 android:layout_height="0dp"

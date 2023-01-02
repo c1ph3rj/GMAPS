@@ -60,7 +60,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/SearchField"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/val_35dp"
                     android:fontFamily="@font/poppins_medium"
                     android:hint="@string/search_location"
                     android:maxLines="1"

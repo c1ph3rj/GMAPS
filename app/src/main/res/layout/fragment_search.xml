@@ -1,61 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/nearByPlacesLayout"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="@dimen/val_10dp"
+    android:orientation="vertical"
+    android:weightSum="10"
     tools:context=".fragments.SearchFragment">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:orientation="vertical"
-            android:weightSum="10"
-            android:layout_height="match_parent">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/val_15dp"
+                android:layout_marginLeft="@dimen/val_15dp"
+                android:layout_marginRight="@dimen/val_15dp"
                 android:text="@string/nearbyplaces"
+                android:layout_marginTop="@dimen/val_6dp"
                 android:fontFamily="@font/poppins_bold"
                 android:textSize="@dimen/text_size_24sp"
                 android:textColor="?attr/colorOnPrimaryContainer"/>
 
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="10">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <com.google.android.material.chip.ChipGroup
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:visibility="gone"
-                        android:layout_margin="@dimen/val_10dp"
-                        android:id="@+id/selectedFilter"/>
-
-                    <com.google.android.material.chip.ChipGroup
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="@dimen/val_10dp"
-                        android:id="@+id/TypeFilter"/>
-
-                </LinearLayout>
-
-
-
-            </ScrollView>
 
         <androidx.viewpager2.widget.ViewPager2
             android:layout_width="match_parent"
+            android:paddingRight="@dimen/val_30dp"
+            android:paddingLeft="@dimen/val_30dp"
+            android:paddingTop="@dimen/val_10dp"
+            android:paddingBottom="@dimen/val_10dp"
             android:layout_height="@dimen/val_350dp"
             android:id="@+id/nearByPlacesDetails"/>
 
     </LinearLayout>
 
-</FrameLayout>

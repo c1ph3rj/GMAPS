@@ -3,6 +3,7 @@ package com.c1ph3r.gmaps.fragments;
 import android.os.Bundle;
 
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -12,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
+import com.c1ph3r.gmaps.MainActivity;
 import com.c1ph3r.gmaps.R;
 import com.c1ph3r.gmaps.apiModel.Result;
 import com.squareup.picasso.Picasso;
@@ -38,11 +40,14 @@ public class NearByPlacesListItem extends Fragment {
             TextView Title, Body;
             RatingBar ratings;
             ImageView imageView;
+            CardView nearByPlaceLayout;
 
             Title = view.findViewById(R.id.nearByPlaceTitle);
             Body = view.findViewById(R.id.nearByPlaceDescription);
             imageView = view.findViewById(R.id.listOfImages);
             ratings = view.findViewById(R.id.nearByPlaceRatings);
+            nearByPlaceLayout = view.findViewById(R.id.nearByPlaceLayout);
+
 
             Title.setText(result.getName());
             Body.setText(result.getVicinity());
@@ -67,6 +72,14 @@ public class NearByPlacesListItem extends Fragment {
                 e.printStackTrace();
             }
 
+            try {
+                nearByPlaceLayout.setOnClickListener(onClickOnAPlace -> {
+                    MainActivity.bottomNav.setSelectedItemId(R.id.HomePageBtn);
+                    MapsFragment.setMarkerOnNewLocation(result, requireContext());
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
         }
 

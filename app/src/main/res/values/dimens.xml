@@ -30,4 +30,7 @@
     <dimen name="val_300dp">300dp</dimen>
     <dimen name="val_350dp">350dp</dimen>
     <dimen name="val_100dp">100dp</dimen>
+    <dimen name="val_12sp">12sp</dimen>
+    <dimen name="val_35dp">35dp</dimen>
+    <dimen name="val_30dp">30dp</dimen>
 </resources>

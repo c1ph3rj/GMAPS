@@ -1,13 +1,21 @@
 package com.c1ph3r.gmaps.fragments;
 
+import static com.c1ph3r.gmaps.MainActivity.bottomNav;
+import static com.c1ph3r.gmaps.MainActivity.imm;
 import static com.c1ph3r.gmaps.MainActivity.latLng;
+import static com.c1ph3r.gmaps.MainActivity.screenHeight;
 
+import android.graphics.Rect;
+import android.inputmethodservice.KeyboardView;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
+import android.view.ViewTreeObserver;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -26,12 +34,10 @@ import com.c1ph3r.gmaps.apiModel.PlacesResults;
 import com.c1ph3r.gmaps.apiModel.Result;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.net.PlacesClient;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import retrofit2.Call;
@@ -40,11 +46,10 @@ import retrofit2.Response;
 
 public class SearchFragment extends Fragment {
     View view;
-    TextInputEditText searchLocationField;
-    ListView searchResultView;
     PlacesClient placesClient;
     ViewPager2 listOfPlacesView;
-    ChipGroup placeTypes, selectedFilters;
+
+
     ArrayList<NearByPlacesListItem> listOfPlaces = new ArrayList<>();
     private final Handler sliderHandler = new Handler();
 
@@ -60,6 +65,7 @@ public class SearchFragment extends Fragment {
 
         try {
             init();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -70,47 +76,11 @@ public class SearchFragment extends Fragment {
 
     private void init() {
         try {
-            searchLocationField = view.findViewById(R.id.SearchField);
-            searchResultView = view.findViewById(R.id.SearchResultItems);
             listOfPlacesView = view.findViewById(R.id.nearByPlacesDetails);
-            placeTypes = view.findViewById(R.id.TypeFilter);
-            selectedFilters = view.findViewById(R.id.selectedFilter);
-
-            ArrayList<String> selectedTypes = new ArrayList<>();
-            ArrayList<String> listOfTypes = new ArrayList<>(Arrays.asList(requireActivity().getResources().getStringArray(R.array.listOfPlacesTypes)));
-
-            for (String type : listOfTypes) {
-                Chip chipBtn = new Chip(requireActivity(), null, com.google.android.material.R.style.Widget_Material3_Chip_Suggestion);
-                chipBtn.setText(type);
-                chipBtn.setCheckable(true);
-                chipBtn.setClickable(true);
-                chipBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        if (!(buttonView.isChecked()) && selectedTypes.contains(buttonView.getText().toString())) {
-                            selectedTypes.remove(buttonView.getText().toString());
-                        } else {
-                            selectedTypes.add(buttonView.getText().toString());
-                        }
-                        if (selectedTypes.size() > 0) {
-                            selectedFilters.removeAllViews();
-                            for (String val : selectedTypes) {
-                                Chip chip = new Chip(requireContext(), null, com.google.android.material.R.style.Widget_Material3_Chip_Assist);
-                                chip.setChecked(true);
-                                chip.setText(val);
-                                selectedFilters.addView(chip);
-                                selectedFilters.setVisibility(View.VISIBLE);
-                            }
-                        } else {
-                            selectedFilters.setVisibility(View.GONE);
-                        }
-                    }
-                });
-                placeTypes.addView(chipBtn);
-            }
-
 
             initPlaces();
+
+
 
             new Handler().postDelayed(this::initViewPager, 3000);
         } catch (Exception e) {
@@ -142,7 +112,7 @@ public class SearchFragment extends Fragment {
                             listOfPlacesView.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
 
                             CompositePageTransformer compositePageTransformer = new CompositePageTransformer();
-                            compositePageTransformer.addTransformer(new MarginPageTransformer(40));
+                            compositePageTransformer.addTransformer(new MarginPageTransformer(5));
                             compositePageTransformer.addTransformer((page, position) -> {
                                 float r = 1 - Math.abs(position);
                                 page.setScaleY(0.85f + r * 0.15f);
@@ -181,7 +151,7 @@ public class SearchFragment extends Fragment {
         @Override
         public void run() {
             if (listOfPlacesView.getCurrentItem() == listOfPlaces.size() - 1) {
-                listOfPlacesView.setCurrentItem(1);
+                listOfPlacesView.setCurrentItem(0);
             } else {
                 listOfPlacesView.setCurrentItem(listOfPlacesView.getCurrentItem() + 1);
             }

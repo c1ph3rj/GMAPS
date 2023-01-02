@@ -16,6 +16,7 @@
     <string name="nearbyplacesimages">nearByPlacesImages</string>
     <string name="images">Images</string>
     <string name="nearbyplaces">NearByPlaces:</string>
+    <string name="search_nearby_places">Search NearBy Places</string>
 
 
     <string-array name="listOfPlacesTypes">

@@ -65,9 +65,14 @@ public class MainActivity extends AppCompatActivity{
     public static List<Address> addresses;
     public static LatLng latLng;
     public static Location location;
+    public static InputMethodManager imm;
     public static BottomNavigationView bottomNav;
-    Fragment maps;
+    public static ViewPager2 container;
+    Fragment maps, search;
+    public static int screenHeight;
     View mapView;
+    final int NEARBY_PLACES_ID = 1;
+    View nearByPlacesView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +85,8 @@ public class MainActivity extends AppCompatActivity{
 
     void init(){
         bottomNav = BindMain.BottomNavigation;
-        ViewPager2 container = BindMain.ViewPager;
+        container = BindMain.ViewPager;
+        imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 
         try {
             getLocationOfTheUser();
@@ -92,7 +98,7 @@ public class MainActivity extends AppCompatActivity{
         ArrayList<Fragment> listOfFragments = new ArrayList<>();
         maps = new MapsFragment();
         listOfFragments.add(maps);
-        Fragment search = new SearchFragment();
+        search = new SearchFragment();
         Log.i("MapFragment", String.valueOf(search.getId()));
         listOfFragments.add(search);
         Fragment settings = new SettingsFragment();
@@ -133,13 +139,19 @@ public class MainActivity extends AppCompatActivity{
             return true;
         });
 
+        handleLayoutChanges();
+
+    }
+
+    private void handleLayoutChanges() {
+        container.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+        });
     }
 
     @Override
     public void onBackPressed() {
         MainActivity.bottomNav.setVisibility(View.VISIBLE);
         mapView = maps.getView();
-        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         if(mapView != null){
             imm.hideSoftInputFromWindow(mapView.getWindowToken(), 0);
             TextInputEditText searchField = mapView.findViewById(R.id.SearchField);
