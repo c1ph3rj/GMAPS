@@ -15,11 +15,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
+import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsetsAnimation;
 import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -37,6 +39,7 @@ import com.c1ph3r.gmaps.R;
 import com.c1ph3r.gmaps.adapter.searchResultListViewAdapter;
 import com.c1ph3r.gmaps.apiClient.GoogleMapAPI;
 import com.c1ph3r.gmaps.apiModel.Geometry;
+import com.c1ph3r.gmaps.apiModel.LatLngPoints;
 import com.c1ph3r.gmaps.apiModel.Result;
 import com.c1ph3r.gmaps.common.DirectionsJSONParser;
 import com.c1ph3r.gmaps.model.SearchResultList;
@@ -50,6 +53,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -62,7 +66,10 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.gson.JsonArray;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -98,6 +105,7 @@ public class MapsFragment extends Fragment {
     public static int destinationPoint =0;
     public static LatLng destinationLatLng;
     PlacesClient placesClient;
+    ArrayList<LatLngPoints> listOfPoints;
     AutocompleteSessionToken autocompleteSessionToken;
 
     private final OnMapReadyCallback callback = new OnMapReadyCallback() {
@@ -202,45 +210,91 @@ public class MapsFragment extends Fragment {
 
                     String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters + "&key=" + getString(R.string.API_KEY);
 
-//                            OkHttpClient client = new OkHttpClient().newBuilder()
-//                                    .build();
-//                            MediaType mediaType = MediaType.parse("text/plain");
-//                            RequestBody body = RequestBody.create(mediaType, "");
-//                            Request request = new Request.Builder()
-//                                    .url(url)
-//                                    .get()
-//                                    .build();
-//                            try {
-//                                Response response = client.newCall(request).execute();
-//
-//                                if(response.body() != null){
-//                                    String resp = response.body().toString();
-//                                    ResponseBody obj = response.body();
-//                                    JSONObject ob = new JSONObject(obj.string());
-//                                    Log.i("null", ob.toString());
-//
-//                                    ParserTask parserTask = new ParserTask();
-//                                    parserTask.execute(obj.string());
-//
-//                                }
-//
-//
-//
-//
-//                            } catch (Exception e) {
-//                                e.printStackTrace();
-//                            }
+                            OkHttpClient client = new OkHttpClient().newBuilder()
+                                    .build();
+                            Request request = new Request.Builder()
+                                    .url(url)
+                                    .get()
+                                    .build();
+                            try {
+                                Response response = client.newCall(request).execute();
 
-                    DownloadTask downloadTask = new DownloadTask();
-                    downloadTask.execute(url);
+                                if(response.body() != null){
+                                    ResponseBody resObj = response.body();
+                                    JSONObject responseObj = new JSONObject(resObj.string());
+                                    Log.i("null", responseObj.toString());
+
+                                    if((responseObj.getJSONArray("geocoded_waypoints"))
+                                            .getJSONObject(0)
+                                            .getString("geocoder_status")
+                                            .equals("OK")){
+                                        JSONArray routes = responseObj.getJSONArray("routes");
+                                        for(int i = 0;i<routes.length();i++){
+                                            JSONObject responseRoute = routes.getJSONObject(i);
+
+                                            // getting boundaries.
+                                            JSONObject bounds = responseRoute.getJSONObject("bounds");
+                                            LatLngBounds mapBounds = setLatLongBounds(bounds);
+                                            // using the boundaries, cover both the lat long points inside the camera of google maps.
+                                            if(mapBounds != null){
+                                                requireActivity().runOnUiThread(() -> {
+                                                    setUserCurrentLocationOnMap();
+                                                    googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(mapBounds, 120));
+                                                });
+                                            }
+
+                                            JSONArray legs = responseRoute.getJSONArray("legs");
+
+                                            for(int j = 0; j < legs.length() ; j++){
+                                                JSONObject distance = legs.getJSONObject(i).getJSONObject("distance");
+                                                JSONObject timeTaken = legs.getJSONObject(i).getJSONObject("duration");
+                                                JSONArray steps = legs.getJSONObject(i).getJSONArray("steps");
+
+                                                requireActivity().runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        try {
+                                                            Toast.makeText(requireContext(), distance.getString("text") +" ", Toast.LENGTH_SHORT).show();
+                                                            Toast.makeText(requireContext(), timeTaken.getString("text")+ " ", Toast.LENGTH_SHORT).show();
+                                                        } catch (JSONException e) {
+                                                            e.printStackTrace();
+                                                        }
+                                                    }
+                                                });
+
+                                                listOfPoints = new ArrayList<>();
+                                                for(int k = 0; k< steps.length() ; k++){
+                                                    JSONObject eachStep = steps.getJSONObject(i);
+                                                    JSONObject distanceEachPoint = eachStep.getJSONObject("distance");
+                                                    JSONObject timeTakenEachPoint = eachStep.getJSONObject("duration");
+                                                    JSONObject startPoint = eachStep.getJSONObject("start_location");
+                                                    JSONObject endPoint = eachStep.getJSONObject("end_location");
+                                                    String instruction = eachStep.getString("html_instructions");
+                                                    requireActivity().runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            Toast.makeText(requireContext(), instruction + " ", Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+
+                                                }
+
+                                            }
+
+                                        }
+                                    }
+
+                                }
 
 
-                    requireActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            setUserCurrentLocationOnMap();
-                        }
-                    });
+
+
+                            } catch (Exception e) {
+                                Toast.makeText(requireActivity(), "Response Bad! please come back later.", Toast.LENGTH_SHORT).show();
+                                e.printStackTrace();
+                            }
+
+
                 }
             }).start());
         } catch (Exception e) {
@@ -248,130 +302,18 @@ public class MapsFragment extends Fragment {
         }
     }
 
-    private String downloadUrl(String strUrl) throws IOException {
-        String data = "";
-        InputStream iStream = null;
-        HttpURLConnection urlConnection = null;
+    private LatLngBounds setLatLongBounds(JSONObject bounds) {
         try {
-            URL url = new URL(strUrl);
-
-            urlConnection = (HttpURLConnection) url.openConnection();
-
-            urlConnection.connect();
-
-            iStream = urlConnection.getInputStream();
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
-
-            StringBuilder sb = new StringBuilder();
-
-            String line;
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
-            }
-
-            data = sb.toString();
-
-            br.close();
-            Log.d("data", data);
-
+            JSONObject southWestObj = bounds.getJSONObject("southwest");
+            JSONObject northEastObj = bounds.getJSONObject("northeast");
+            LatLng southWest = new LatLng(southWestObj.getDouble("lat"), southWestObj.getDouble("lng"));
+            LatLng northEast = new LatLng(northEastObj.getDouble("lat"), northEastObj.getDouble("lng"));
+            return new LatLngBounds(southWest, northEast);
         } catch (Exception e) {
-            Log.d("Exception", e.toString());
-        } finally {
-            assert iStream != null;
-            iStream.close();
-            urlConnection.disconnect();
-        }
-        return data;
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    private class DownloadTask extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String... url) {
-
-            String data = "";
-
-            try {
-                data = downloadUrl(url[0]);
-            } catch (Exception e) {
-                Log.d("Background Task", e.toString());
-            }
-            return data;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-
-            ParserTask parserTask = new ParserTask();
-
-
-            parserTask.execute(result);
-
+            e.printStackTrace();
+            return null;
         }
     }
-
-
-    private static class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
-
-        // Parsing the data in non-ui thread
-        @Override
-        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
-
-            JSONObject jObject;
-            List<List<HashMap<String, String>>> routes = null;
-
-            try {
-                jObject = new JSONObject(jsonData[0]);
-                DirectionsJSONParser parser = new DirectionsJSONParser();
-
-                routes = parser.parse(jObject);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return routes;
-        }
-
-        @Override
-        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-
-
-            Log.d("result", result.toString());
-            ArrayList<LatLng> points;
-            PolylineOptions lineOptions = null;
-
-            for (int i = 0; i < result.size(); i++) {
-                points = new ArrayList<>();
-                lineOptions = new PolylineOptions();
-
-                List<HashMap<String, String>> path = result.get(i);
-
-                for (int j = 0; j < path.size(); j++) {
-                    HashMap<String, String> point = path.get(j);
-
-                    double lat = Double.parseDouble(Objects.requireNonNull(point.get("lat")));
-                    double lng = Double.parseDouble(Objects.requireNonNull(point.get("lng")));
-                    LatLng position = new LatLng(lat, lng);
-
-                    points.add(position);
-                }
-
-                lineOptions.addAll(points);
-                lineOptions.width(12);
-                lineOptions.color(Color.RED);
-                lineOptions.geodesic(true);
-
-            }
-
-// Drawing polyline in the Google Map for the i-th route
-            if(lineOptions != null){
-                googleMap.addPolyline(lineOptions);
-            }
-        }
-    }
-
 
     void init(View view){
         try {
