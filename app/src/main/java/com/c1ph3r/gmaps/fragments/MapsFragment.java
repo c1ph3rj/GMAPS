@@ -5,23 +5,19 @@ import static com.c1ph3r.gmaps.MainActivity.getUserLocation;
 import static com.c1ph3r.gmaps.MainActivity.latLng;
 import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.alertTheUser;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
-import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowInsetsAnimation;
 import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -33,17 +29,12 @@ import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.airbnb.lottie.model.Marker;
 import com.c1ph3r.gmaps.MainActivity;
 import com.c1ph3r.gmaps.R;
 import com.c1ph3r.gmaps.adapter.searchResultListViewAdapter;
-import com.c1ph3r.gmaps.apiClient.GoogleMapAPI;
-import com.c1ph3r.gmaps.apiModel.Geometry;
 import com.c1ph3r.gmaps.apiModel.LatLngPoints;
 import com.c1ph3r.gmaps.apiModel.Result;
-import com.c1ph3r.gmaps.common.DirectionsJSONParser;
 import com.c1ph3r.gmaps.model.SearchResultList;
-import com.google.android.gms.common.api.GoogleApi;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -55,7 +46,6 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.AutocompletePrediction;
@@ -66,29 +56,18 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.gson.JsonArray;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
@@ -250,34 +229,50 @@ public class MapsFragment extends Fragment {
                                                 JSONObject timeTaken = legs.getJSONObject(i).getJSONObject("duration");
                                                 JSONArray steps = legs.getJSONObject(i).getJSONArray("steps");
 
-                                                requireActivity().runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        try {
-                                                            Toast.makeText(requireContext(), distance.getString("text") +" ", Toast.LENGTH_SHORT).show();
-                                                            Toast.makeText(requireContext(), timeTaken.getString("text")+ " ", Toast.LENGTH_SHORT).show();
-                                                        } catch (JSONException e) {
-                                                            e.printStackTrace();
-                                                        }
+                                                requireActivity().runOnUiThread(() -> {
+                                                    try {
+                                                        Toast.makeText(requireContext(), distance.getString("text") +" ", Toast.LENGTH_SHORT).show();
+                                                        Toast.makeText(requireContext(), timeTaken.getString("text")+ " ", Toast.LENGTH_SHORT).show();
+                                                    } catch (JSONException e) {
+                                                        e.printStackTrace();
                                                     }
                                                 });
 
                                                 listOfPoints = new ArrayList<>();
                                                 for(int k = 0; k< steps.length() ; k++){
-                                                    JSONObject eachStep = steps.getJSONObject(i);
+                                                    JSONObject eachStep = steps.getJSONObject(k);
                                                     JSONObject distanceEachPoint = eachStep.getJSONObject("distance");
                                                     JSONObject timeTakenEachPoint = eachStep.getJSONObject("duration");
                                                     JSONObject startPoint = eachStep.getJSONObject("start_location");
                                                     JSONObject endPoint = eachStep.getJSONObject("end_location");
                                                     String instruction = eachStep.getString("html_instructions");
-                                                    requireActivity().runOnUiThread(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            Toast.makeText(requireContext(), instruction + " ", Toast.LENGTH_SHORT).show();
-                                                        }
-                                                    });
+                                                    String polyline = eachStep.getJSONObject("polyline").getString("points");
 
+                                                    LatLng eachStartPoint = new LatLng(startPoint.getDouble("lat"), startPoint.getDouble("lng"));
+                                                    LatLng eachEndPoint = new LatLng(endPoint.getDouble("lat"), endPoint.getDouble("lng"));
+                                                    String eachDistance = distanceEachPoint.getString("text");
+                                                    String eachDuration = timeTakenEachPoint.getString("text");
+                                                    ArrayList<LatLng> polyLineDecodedPoints = new ArrayList<>(decodePoly(polyline));
+
+                                                    listOfPoints.add(new LatLngPoints(eachStartPoint, eachEndPoint, eachDistance, eachDuration, instruction, polyLineDecodedPoints));
                                                 }
+
+                                                PolylineOptions routeOptions = new PolylineOptions();
+                                                ArrayList<LatLng> polyLinePoints = new ArrayList<>();
+
+                                                for (LatLngPoints polyPoint: listOfPoints){
+                                                    polyLinePoints.addAll(polyPoint.getRoutePoints());
+                                                }
+
+
+                                                requireActivity().runOnUiThread(() -> {
+                                                    routeOptions.addAll(polyLinePoints)
+                                                            .geodesic(true)
+                                                            .color(Color.parseColor("#001C37"))
+                                                            .width(12);
+
+                                                    googleMap.addPolyline(routeOptions);
+                                                });
 
                                             }
 
@@ -300,6 +295,40 @@ public class MapsFragment extends Fragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private List<LatLng> decodePoly(String encoded) {
+
+        List<LatLng> poly = new ArrayList<>();
+        int index = 0, len = encoded.length();
+        int lat = 0, lng = 0;
+
+        while (index < len) {
+            int b, shift = 0, result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lat += dlat;
+
+            shift = 0;
+            result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lng += dlng;
+
+            LatLng p = new LatLng((((double) lat / 1E5)),
+                    (((double) lng / 1E5)));
+            poly.add(p);
+        }
+
+        return poly;
     }
 
     private LatLngBounds setLatLongBounds(JSONObject bounds) {
