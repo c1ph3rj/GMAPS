@@ -1,46 +1,37 @@
 package com.c1ph3r.gmaps;
 
-import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.*;
+import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.alertTheUser;
+import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.checkGPSStatus;
+import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.isNetworkConnected;
+import static com.c1ph3r.gmaps.fragments.MapsFragment.googleMap;
+import static com.c1ph3r.gmaps.fragments.MapsFragment.isNavigationEnabled;
 
-import androidx.annotation.NonNull;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+import android.view.View;
+import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.InputMethodManager;
+
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.CompositePageTransformer;
 import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.content.pm.ResolveInfo;
-import android.graphics.Rect;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationListener;
-import android.os.Bundle;
-import android.os.Handler;
-import android.renderscript.RenderScript;
-import android.util.Log;
-import android.view.View;
-import android.view.ViewTreeObserver;
-import android.view.inputmethod.InputMethod;
-import android.view.inputmethod.InputMethodInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.Toast;
-
 import com.c1ph3r.gmaps.adapter.BottomNavAdapter;
 import com.c1ph3r.gmaps.databinding.ActivityMainBinding;
 import com.c1ph3r.gmaps.fragments.MapsFragment;
+import com.c1ph3r.gmaps.fragments.NavigationViewMap;
 import com.c1ph3r.gmaps.fragments.SearchFragment;
 import com.c1ph3r.gmaps.fragments.SettingsFragment;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -50,16 +41,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 
-import org.xmlpull.v1.XmlPullParserException;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity {
     ActivityMainBinding BindMain;
 
     public static List<Address> addresses;
@@ -68,7 +55,7 @@ public class MainActivity extends AppCompatActivity{
     public static InputMethodManager imm;
     public static BottomNavigationView bottomNav;
     public static ViewPager2 container;
-    Fragment maps, search;
+    Fragment maps, search, navigationMap;
     public static int screenHeight;
     View mapView;
     final int NEARBY_PLACES_ID = 1;
@@ -83,10 +70,10 @@ public class MainActivity extends AppCompatActivity{
         init();
     }
 
-    void init(){
+    void init() {
         bottomNav = BindMain.BottomNavigation;
         container = BindMain.ViewPager;
-        imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
         try {
             getLocationOfTheUser();
@@ -103,6 +90,8 @@ public class MainActivity extends AppCompatActivity{
         listOfFragments.add(search);
         Fragment settings = new SettingsFragment();
         listOfFragments.add(settings);
+        navigationMap = new NavigationViewMap();
+        listOfFragments.add(navigationMap);
 
         BottomNavAdapter bottomNavAdapter = new BottomNavAdapter(this, listOfFragments);
         container.setAdapter(bottomNavAdapter);
@@ -126,11 +115,11 @@ public class MainActivity extends AppCompatActivity{
 
         bottomNav.setOnItemSelectedListener(bottomNavItem -> {
             try {
-                if(bottomNavItem.getItemId() == R.id.HomePageBtn){
+                if (bottomNavItem.getItemId() == R.id.HomePageBtn) {
                     container.setCurrentItem(0);
-                }else if(bottomNavItem.getItemId() == R.id.SearchBtn){
+                } else if (bottomNavItem.getItemId() == R.id.SearchBtn) {
                     container.setCurrentItem(1);
-                }else if(bottomNavItem.getItemId() == R.id.SettingsBtn){
+                } else if (bottomNavItem.getItemId() == R.id.SettingsBtn) {
                     container.setCurrentItem(2);
                 }
             } catch (Exception e) {
@@ -152,21 +141,26 @@ public class MainActivity extends AppCompatActivity{
     public void onBackPressed() {
         MainActivity.bottomNav.setVisibility(View.VISIBLE);
         mapView = maps.getView();
-        if(mapView != null){
+        if (mapView != null) {
             imm.hideSoftInputFromWindow(mapView.getWindowToken(), 0);
             TextInputEditText searchField = mapView.findViewById(R.id.SearchField);
-            if(searchField.isFocused()) {
+            CardView navigateBtn = mapView.findViewById(R.id.Navigate);
+            CardView locateMe = mapView.findViewById(R.id.locateMeBtn);
+            if (searchField.isFocused()) {
                 new Handler().postDelayed(searchField::clearFocus, 200);
-                return;
             }
+        } else if (bottomNav.getSelectedItemId() != R.id.HomePageBtn) {
+            bottomNav.setSelectedItemId(R.id.HomePageBtn);
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle("Maps C")
+                    .setMessage("Do you want to exit ?")
+                    .setPositiveButton("Yes", (dialog, which) -> finishAffinity())
+                    .setNegativeButton("No", (dialog, which) -> {
+                    })
+                    .show();
         }
 
-        new AlertDialog.Builder(this)
-                .setTitle("Maps C")
-                .setMessage("Do you want to exit ?")
-                .setPositiveButton("Yes", (dialog, which) -> finishAffinity())
-                .setNegativeButton("No", (dialog, which) ->{})
-                .show();
     }
 
     // Method to Fetch user Location
@@ -181,7 +175,7 @@ public class MainActivity extends AppCompatActivity{
                 // converting the long and lat to the address.
                 Geocoder fetchAddress = new Geocoder(context, Locale.getDefault());
                 try {
-                    if(location != null){
+                    if (location != null) {
                         MainActivity.location = location;
                         latLng = new LatLng(location.getLatitude(), location.getLongitude());
                         // Fetching the address from the response
@@ -198,26 +192,24 @@ public class MainActivity extends AppCompatActivity{
         }
     }// End of getUserLocation.
 
-    void getLocationOfTheUser(){
+    void getLocationOfTheUser() {
         try {
             final Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 public void run() {
-                    if(isNetworkConnected(MainActivity.this)){
-                        if(checkGPSStatus(MainActivity.this)){
+                    if (isNetworkConnected(MainActivity.this)) {
+                        if (checkGPSStatus(MainActivity.this)) {
                             getUserLocation(MainActivity.this);
-                        }else {
+                        } else {
                             alertTheUser(MainActivity.this, "Location disabled!", "Your GPS service disabled. Please turn on your GPS to fetch your location.");
                         }
-                    }else {
+                    } else {
                         alertTheUser(MainActivity.this, "Internet connection required!", "Your internet connection disabled. Please enable your internet connection to continue.");
                     }
                     handler.postDelayed(this, 120000); //now is every 2 minutes
                 }
             }, 120000); //Every 120000 ms (2 minutes)
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }

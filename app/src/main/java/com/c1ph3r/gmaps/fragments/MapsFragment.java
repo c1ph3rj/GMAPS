@@ -1,11 +1,15 @@
 package com.c1ph3r.gmaps.fragments;
 
 import static com.c1ph3r.gmaps.MainActivity.addresses;
+import static com.c1ph3r.gmaps.MainActivity.bottomNav;
+import static com.c1ph3r.gmaps.MainActivity.container;
 import static com.c1ph3r.gmaps.MainActivity.getUserLocation;
 import static com.c1ph3r.gmaps.MainActivity.latLng;
 import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.alertTheUser;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -21,6 +25,7 @@ import android.view.ViewGroup;
 import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -84,6 +89,8 @@ public class MapsFragment extends Fragment {
     public static int destinationPoint =0;
     public static LatLng destinationLatLng;
     PlacesClient placesClient;
+    TextView distanceView, durationView;
+    public static boolean isNavigationEnabled = false;
     ArrayList<LatLngPoints> listOfPoints;
     AutocompleteSessionToken autocompleteSessionToken;
 
@@ -268,14 +275,21 @@ public class MapsFragment extends Fragment {
                                                 requireActivity().runOnUiThread(() -> {
                                                     routeOptions.addAll(polyLinePoints)
                                                             .geodesic(true)
-                                                            .color(Color.parseColor("#001C37"))
+                                                            .color(Color.parseColor("#0F61A4"))
                                                             .width(12);
 
                                                     googleMap.addPolyline(routeOptions);
+
+
                                                 });
 
                                             }
 
+                                            try {
+                                                requireActivity().startActivity(new Intent(requireActivity(), NavigationViewActivity.class));
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                            }
                                         }
                                     }
 
@@ -285,7 +299,12 @@ public class MapsFragment extends Fragment {
 
 
                             } catch (Exception e) {
-                                Toast.makeText(requireActivity(), "Response Bad! please come back later.", Toast.LENGTH_SHORT).show();
+                                requireActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(requireActivity(), "Response Bad! please come back later.", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                                 e.printStackTrace();
                             }
 
@@ -352,6 +371,12 @@ public class MapsFragment extends Fragment {
             searchLayout = view.findViewById(R.id.search_field_layout);
             searchResultLayout = view.findViewById(R.id.searchResultLayout);
             searchResultView = view.findViewById(R.id.SearchResultItems);
+            distanceView = view.findViewById(R.id.distanceValue);
+            durationView = view.findViewById(R.id.durationTaken);
+
+
+
+
             initPlaces();
 
             searchMenu();
@@ -374,7 +399,7 @@ public class MapsFragment extends Fragment {
         }
     }
 
-    private void setUserCurrentLocationOnMap() {
+    public void setUserCurrentLocationOnMap() {
         try {
             if(latLng != null){
                 // Instantiating CircleOptions to draw a circle around the marker

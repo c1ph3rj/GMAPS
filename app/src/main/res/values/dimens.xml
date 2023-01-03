@@ -33,4 +33,5 @@
     <dimen name="val_12sp">12sp</dimen>
     <dimen name="val_35dp">35dp</dimen>
     <dimen name="val_30dp">30dp</dimen>
+    <dimen name="val_18sp">18sp</dimen>
 </resources>
