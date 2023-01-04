@@ -91,7 +91,6 @@ public class MapsFragment extends Fragment {
     PlacesClient placesClient;
     TextView distanceView, durationView;
     public static boolean isNavigationEnabled = false;
-    ArrayList<LatLngPoints> listOfPoints;
     AutocompleteSessionToken autocompleteSessionToken;
 
     private final OnMapReadyCallback callback = new OnMapReadyCallback() {
@@ -176,64 +175,17 @@ public class MapsFragment extends Fragment {
                 searchResultView.setAdapter(new searchResultListViewAdapter(requireActivity(), listOfSearchPlaces));
             });
 
-            navigateBtn.setOnClickListener(v -> new Thread(() -> {
-                requireActivity().runOnUiThread(() -> {
-                    try {
+            navigateBtn.setOnClickListener(v -> new Thread(() -> requireActivity().runOnUiThread(() -> {
+                try {
+                    if(destinationPoint == 1){
                         startActivity(new Intent(requireActivity(), NavigationViewActivity.class));
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
-                });
-            }).start());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            })).start());
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    private List<LatLng> decodePoly(String encoded) {
-
-        List<LatLng> poly = new ArrayList<>();
-        int index = 0, len = encoded.length();
-        int lat = 0, lng = 0;
-
-        while (index < len) {
-            int b, shift = 0, result = 0;
-            do {
-                b = encoded.charAt(index++) - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
-            int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-            lat += dlat;
-
-            shift = 0;
-            result = 0;
-            do {
-                b = encoded.charAt(index++) - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
-            int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-            lng += dlng;
-
-            LatLng p = new LatLng((((double) lat / 1E5)),
-                    (((double) lng / 1E5)));
-            poly.add(p);
-        }
-
-        return poly;
-    }
-
-    private LatLngBounds setLatLongBounds(JSONObject bounds) {
-        try {
-            JSONObject southWestObj = bounds.getJSONObject("southwest");
-            JSONObject northEastObj = bounds.getJSONObject("northeast");
-            LatLng southWest = new LatLng(southWestObj.getDouble("lat"), southWestObj.getDouble("lng"));
-            LatLng northEast = new LatLng(northEastObj.getDouble("lat"), northEastObj.getDouble("lng"));
-            return new LatLngBounds(southWest, northEast);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
     }
 

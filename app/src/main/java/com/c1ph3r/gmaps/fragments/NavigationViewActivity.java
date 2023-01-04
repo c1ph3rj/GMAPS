@@ -7,37 +7,35 @@ import static com.c1ph3r.gmaps.common.IsEverythingFineCheck.alertTheUser;
 import static com.c1ph3r.gmaps.fragments.MapsFragment.destinationLatLng;
 import static com.c1ph3r.gmaps.fragments.NavigationViewMap.googleMap;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentContainerView;
-
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import androidx.fragment.app.Fragment;
 
 import com.c1ph3r.gmaps.R;
 import com.c1ph3r.gmaps.apiModel.LatLngPoints;
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -49,20 +47,35 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class NavigationViewActivity extends AppCompatActivity {
+public class NavigationViewActivity extends AppCompatActivity implements LocationSource.OnLocationChangedListener {
 
     ArrayList<LatLngPoints> listOfPoints;
     View navigationMap;
-
+    TextView distanceView, durationView;
+    CardView startNavigateBtn;
+    LinearLayout navigationViewLayout, distanceDetailsViewLayout, bottomView;
+    Handler userLocationHandler;
+    Runnable getUserLocationRunnable;
+    boolean isNavigationStarted = false;
+    LocationManager locationSensor;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_navigation_view);
 
+        try {
+            locationSensor = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            locationSensor.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000L, 5F, this::onLocationChanged);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
+
         if(destinationLatLng != null){
             Fragment navigationMapView = new NavigationViewMap();
             getSupportFragmentManager().beginTransaction().add(R.id.fragmentContainer, navigationMapView)
                     .commit();
+
+            init();
 
             new Handler().postDelayed(() -> {
                 navigationMap = navigationMapView.getView();
@@ -76,6 +89,80 @@ public class NavigationViewActivity extends AppCompatActivity {
             }, 170);
 
         }
+    }
+
+    void init(){
+        durationView = findViewById(R.id.durationTaken);
+        distanceView = findViewById(R.id.distanceValue);
+        navigationViewLayout = findViewById(R.id.navigationDetails);
+        distanceDetailsViewLayout = findViewById(R.id.DistanceDetails);
+        startNavigateBtn = findViewById(R.id.startNavigationBtn);
+        bottomView = findViewById(R.id.bottomVal);
+
+        navigationViewLayout.setVisibility(View.GONE);
+        distanceDetailsViewLayout.setVisibility(View.VISIBLE);
+
+
+        startNavigateBtn.setOnClickListener(onCLickStartNavigateBtn ->{
+                distanceDetailsViewLayout.animate()
+                .translationYBy(distanceDetailsViewLayout.getHeight())
+                .setDuration(400)
+                .alpha(0.0f);
+
+                new Handler().postDelayed(() -> {
+                    distanceDetailsViewLayout.setVisibility(View.GONE);
+                    navigationViewLayout.setAlpha(0);
+                    navigationViewLayout.setVisibility(View.VISIBLE);
+                    navigationViewLayout.animate()
+                            .translationYBy(-navigationViewLayout.getHeight())
+                            .alpha(1)
+                            .setDuration(400);
+                    startNavigation();
+                }, 400);
+
+        });
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(isNavigationStarted){
+            isNavigationStarted = false;
+            userLocationHandler.removeCallbacks(getUserLocationRunnable);
+            navigationViewLayout.clearAnimation();
+            distanceDetailsViewLayout.clearAnimation();
+            navigationViewLayout.setAlpha(1);
+            navigationViewLayout.animate()
+                    .translationYBy(navigationViewLayout.getHeight())
+                    .setDuration(400)
+                    .alpha(0.0f);
+
+            new Handler().postDelayed(() -> {
+                navigationViewLayout.setVisibility(View.GONE);
+                distanceDetailsViewLayout.setAlpha(0);
+                distanceDetailsViewLayout.setVisibility(View.VISIBLE);
+                distanceDetailsViewLayout.animate()
+                        .translationYBy(-distanceDetailsViewLayout.getHeight())
+                        .alpha(1)
+                        .setDuration(400);
+            }, 400);
+
+        }else{
+            finish();
+        }
+    }
+
+    public void startNavigation() {
+        isNavigationStarted = true;
+        userLocationHandler = new Handler();
+        getUserLocationRunnable = new Runnable() {
+            @Override
+            public void run() {
+                getUserLocation(NavigationViewActivity.this);
+                userLocationHandler.postDelayed(this,10000);
+            }
+        };
+
+        userLocationHandler.post(getUserLocationRunnable);
     }
 
     @Override
@@ -132,7 +219,7 @@ public class NavigationViewActivity extends AppCompatActivity {
                             // using the boundaries, cover both the lat long points inside the camera of google maps.
                             if(mapBounds != null){
                                 NavigationViewActivity.this.runOnUiThread(() -> {
-                                    setUserCurrentLocationOnMap();
+                                    setUserNavigationLocations();
                                     googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(mapBounds, 120));
                                 });
                             }
@@ -143,15 +230,6 @@ public class NavigationViewActivity extends AppCompatActivity {
                                 JSONObject distance = legs.getJSONObject(i).getJSONObject("distance");
                                 JSONObject timeTaken = legs.getJSONObject(i).getJSONObject("duration");
                                 JSONArray steps = legs.getJSONObject(i).getJSONArray("steps");
-
-                                NavigationViewActivity.this.runOnUiThread(() -> {
-                                    try {
-                                        Toast.makeText(NavigationViewActivity.this, distance.getString("text") +" ", Toast.LENGTH_SHORT).show();
-                                        Toast.makeText(NavigationViewActivity.this, timeTaken.getString("text")+ " ", Toast.LENGTH_SHORT).show();
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                });
 
                                 listOfPoints = new ArrayList<>();
                                 for(int k = 0; k< steps.length() ; k++){
@@ -167,7 +245,12 @@ public class NavigationViewActivity extends AppCompatActivity {
                                     LatLng eachEndPoint = new LatLng(endPoint.getDouble("lat"), endPoint.getDouble("lng"));
                                     String eachDistance = distanceEachPoint.getString("text");
                                     String eachDuration = timeTakenEachPoint.getString("text");
-                                    ArrayList<LatLng> polyLineDecodedPoints = new ArrayList<>(decodePoly(polyline));
+                                    ArrayList<LatLng> polyLineDecodedPoints = new ArrayList<>();
+                                    try {
+                                        polyLineDecodedPoints = new ArrayList<>(decodePoly(polyline));
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
 
                                     listOfPoints.add(new LatLngPoints(eachStartPoint, eachEndPoint, eachDistance, eachDuration, instruction, polyLineDecodedPoints));
                                 }
@@ -188,6 +271,16 @@ public class NavigationViewActivity extends AppCompatActivity {
 
                                     googleMap.addPolyline(routeOptions);
 
+                                    runOnUiThread(() -> {
+                                        try {
+                                            String distanceVal = "Distance : " + distance.getString("text");
+                                            distanceView.setText(distanceVal);
+                                            String durationVal = "In : " + timeTaken.getString("text");
+                                            durationView.setText(durationVal);
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    });
 
                                 });
 
@@ -218,52 +311,27 @@ public class NavigationViewActivity extends AppCompatActivity {
         }
     }
 
-    public void setUserCurrentLocationOnMap() {
+    public void setUserNavigationLocations() {
         try {
-            if(latLng != null){
-                // Instantiating CircleOptions to draw a circle around the marker
-                CircleOptions circleOptions = new CircleOptions();
+            if(latLng != null && destinationLatLng != null){
+                final MarkerOptions currentMarker =new MarkerOptions();
 
-                // Specifying the center of the circle
-                circleOptions.center(latLng);
+                final MarkerOptions destinationMarker = new MarkerOptions();
 
-                // Radius of the circle
-                circleOptions.radius(10000);
+                currentMarker.position(latLng);
 
-                // Border color of the circle
-                circleOptions.strokeColor(NavigationViewActivity.this.getColor(R.color.primaryColor));
+                destinationMarker.position(destinationLatLng);
 
-                // Fill color of the circle
-                circleOptions.fillColor(getColor(R.color.darkTint));
-
-                // Border width of the circle
-                circleOptions.strokeWidth(2);
+                currentMarker.title(String.valueOf((addresses.get(0)).getAddressLine(0)));
 
 
-                final MarkerOptions markerOptions=new MarkerOptions();
-                // Set position of marker
-                markerOptions.position(latLng)
-                        .flat(true);
-                // Set title of marker
-                markerOptions.title(String.valueOf((addresses.get(0)).getAddressLine(0)));
-
-                // Construct a CameraPosition focusing on Mountain View and animate the camera to that position.
-                CameraPosition cameraPosition = new CameraPosition.Builder()
-                        .target(latLng)             // Sets the center of the map to Mountain View
-                        .zoom(14)                   // Sets the zoom
-                        .build();                   // Creates a CameraPosition from the builder
-
-                // Animating to zoom the marker
-                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                 // Add marker on map
-                Objects.requireNonNull(googleMap.addMarker(markerOptions))
-                        .setIcon(BitmapFromVector(NavigationViewActivity.this, R.drawable.current_gps));
-                // Adding the circle to the GoogleMap
-                googleMap.addCircle(circleOptions);
+                Objects.requireNonNull(googleMap.addMarker(currentMarker));
+                Objects.requireNonNull(googleMap.addMarker(destinationMarker));
             }else {
                 try {
                     getUserLocation(NavigationViewActivity.this);
-                    setUserCurrentLocationOnMap();
+                    setUserNavigationLocations();
                 } catch (Exception e) {
                     alertTheUser(NavigationViewActivity.this,"Something went Wrong!", "Your Internet connection may be down or we are unable to fetch your location at the moment please try again later.");
                     e.printStackTrace();
@@ -308,31 +376,29 @@ public class NavigationViewActivity extends AppCompatActivity {
         return poly;
     }
 
-    private static BitmapDescriptor BitmapFromVector(Context context, int vectorResId) {
+    private void updateCameraBearing(GoogleMap googleMap, float bearing) {
         try {
-            // below line is use to generate a drawable.
-            Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
-
-            // below line is use to set bounds to our vector drawable.
-            assert vectorDrawable != null;
-            vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
-
-            // below line is use to create a bitmap for our
-            // drawable which we have added.
-            Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-
-            // below line is use to add bitmap in our canvas.
-            Canvas canvas = new Canvas(bitmap);
-
-            // below line is use to draw our
-            // vector drawable in canvas.
-            vectorDrawable.draw(canvas);
-
-            // after generating our bitmap we are returning our bitmap.
-            return BitmapDescriptorFactory.fromBitmap(bitmap);
+            if ( googleMap == null) return;
+            CameraPosition camPos = CameraPosition
+                    .builder(
+                            googleMap.getCameraPosition() // current Camera
+                    )
+                    .bearing(bearing)
+                    .build();
+            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+        }
+    }
+
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        if(isNavigationStarted){
+            try {
+                updateCameraBearing(googleMap, location.getBearing());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

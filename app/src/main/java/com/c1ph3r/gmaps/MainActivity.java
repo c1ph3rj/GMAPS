@@ -144,8 +144,6 @@ public class MainActivity extends AppCompatActivity {
         if (mapView != null) {
             imm.hideSoftInputFromWindow(mapView.getWindowToken(), 0);
             TextInputEditText searchField = mapView.findViewById(R.id.SearchField);
-            CardView navigateBtn = mapView.findViewById(R.id.Navigate);
-            CardView locateMe = mapView.findViewById(R.id.locateMeBtn);
             if (searchField.isFocused()) {
                 new Handler().postDelayed(searchField::clearFocus, 200);
             }
