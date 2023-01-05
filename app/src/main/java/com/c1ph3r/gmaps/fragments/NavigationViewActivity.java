@@ -26,6 +26,7 @@ import androidx.fragment.app.Fragment;
 
 import com.c1ph3r.gmaps.R;
 import com.c1ph3r.gmaps.apiModel.LatLngPoints;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
@@ -58,6 +59,8 @@ public class NavigationViewActivity extends AppCompatActivity implements Locatio
     Runnable getUserLocationRunnable;
     boolean isNavigationStarted = false;
     LocationManager locationSensor;
+    MarkerOptions optionMarker = new MarkerOptions();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -395,6 +398,7 @@ public class NavigationViewActivity extends AppCompatActivity implements Locatio
     public void onLocationChanged(@NonNull Location location) {
         if(isNavigationStarted){
             try {
+                optionMarker.position(new LatLng(location.getLatitude(), location.getLongitude()));
                 updateCameraBearing(googleMap, location.getBearing());
             } catch (Exception e) {
                 e.printStackTrace();
